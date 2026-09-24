@@ -1,0 +1,114 @@
+﻿using BD_Banco;
+using Oracle.ManagedDataAccess.Client;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace Int_Empleado
+{
+    public partial class Cambios : Form
+    {
+        public Cambios()
+        {
+            InitializeComponent();
+        }
+
+        private void CancelarBtn_Click(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void ModificarBtn_Click(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void BorrarBtn_Click(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void ModificarBtn_Click_1(object sender, EventArgs e)
+        {
+            // Validar entradas
+            if (string.IsNullOrWhiteSpace(TxtIDCuenta.Text) ||
+                string.IsNullOrWhiteSpace(TxtSaldo.Text) ||
+                ComboCiudad.SelectedIndex == -1 ||
+                string.IsNullOrWhiteSpace(ComboTipo.Text))
+            {
+                MessageBox.Show("Por favor, llene todos los campos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            try
+            {
+                // Obtener valores de los controles
+                int idCuenta = Convert.ToInt32(TxtIDCuenta.Text);
+                decimal saldo = Convert.ToDecimal(TxtSaldo.Text);
+                string ciudad = ComboCiudad.SelectedItem.ToString();
+                string tipoCuenta = ComboTipo.SelectedItem.ToString();
+
+                // Crear la conexión
+                Conexion conexion = new Conexion();
+                using (OracleConnection con = conexion.CrearConexion())
+                {
+                    // Asegurarse de que la conexión esté abierta
+                    if (con.State != ConnectionState.Open)
+                    {
+                        con.Open();
+                    }
+
+                    using (OracleCommand cmd = new OracleCommand("ActualizarCuenta", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        // Definir los parámetros del procedimiento almacenado
+                        cmd.Parameters.Add("p_IdCuenta", OracleDbType.Int32).Value = idCuenta;
+                        cmd.Parameters.Add("p_Tipo", OracleDbType.Varchar2).Value = tipoCuenta;
+                        cmd.Parameters.Add("p_NTarjeta", OracleDbType.Varchar2).Value = TxtNum.Text;
+                        cmd.Parameters.Add("p_Saldo", OracleDbType.Decimal).Value = saldo;
+                        cmd.Parameters.Add("p_Ciudad", OracleDbType.Varchar2).Value = ciudad;
+
+                        // Ejecutar el procedimiento almacenado
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show($"Cuenta con ID {idCuenta} actualizada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+
+                // Opcional: Actualizar DataGridView con los datos de las cuentas (si es necesario)
+                datosSql datos = new datosSql();
+                string consultaCuentas = "SELECT saldo, ntarjeta, Ciudad, Tipo FROM Cuenta";
+                DatosdataGridView1.DataSource = datos.Listar(consultaCuentas);
+
+
+            }
+            catch (Exception ex)
+            {
+                // Manejar excepciones de forma adecuada
+                MessageBox.Show($"Error al actualizar la cuenta: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BorrarBtn_Click_1(object sender, EventArgs e)
+        {
+            TxtIDCuenta.Clear();
+            TxtSaldo.Clear();
+            TxtNum.Clear();
+            ComboCiudad.Items.Clear();
+            ComboTipo.Items.Clear();
+        }
+
+        private void CancelarBtn_Click_1(object sender, EventArgs e)
+        {
+            EmpleadoForm mainForm = new EmpleadoForm();
+            mainForm.Show();
+            this.Close();
+        }
+    }
+}
